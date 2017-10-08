@@ -1,0 +1,14 @@
+.stitches-sprite(@x, @y, @width, @height, @scale:1) {
+    background-position: @x*@scale @y*@scale;
+    width: @width*@scale;
+    height: @height*@scale;
+    background-size : {{spritesheet.px.width}}*@scale {{spritesheet.px.height}}*@scale;
+    background-image: url(datas/img/spritesheet.png);
+    background-repeat: no-repeat;
+}
+
+{{#sprites}}
+.sprite-{{name}}(@scale:1) {
+    .stitches-sprite({{px.offset_x}}, {{px.offset_y}}, {{px.width}}, {{px.height}}, @scale);
+}
+{{/sprites}}
