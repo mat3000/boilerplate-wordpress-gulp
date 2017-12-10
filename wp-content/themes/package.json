@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "NODE_ENV=dev gulp",
+    "start": "NODE_ENV=dev gulp",
     "sprite": "gulp sprite",
     "dist": "gulp"
   },
