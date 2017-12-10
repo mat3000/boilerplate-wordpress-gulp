@@ -2,11 +2,32 @@
 let themeName = 'boilerplate';
 themeName = process.env.NODE_ENV ? themeName + '-dev' : themeName;
 
+
+if(process.env.npm_config_logs){
+	console.log('\x1b[41m\x1b[37m');
+	console.log('|-----------------------------------|');
+	console.log('| Warning : control log disable !!! |');
+	console.log('|-----------------------------------|', '\x1b[0m');
+}
+
 let themeInfo = `/*
 	Theme Name: ${themeName}
 	Author: mathieu bruno
 	Version: 0.1
 */`;
+
+/*const { exec } = require('child_process');
+exec('pwd', (err, stdout, stderr) => console.log(`stdout: ${stdout}`) );*/
+
+
+/*const domain_prod = 'http://preview.com';
+const domain_dev  = 'http://preview.matdev.fr';
+var mysql = require('mysql');
+var mysqlPool  = mysql.createPool({
+  host     : '127.0.0.1',
+  user     : 'root',
+  password : 'root'
+});*/
 
 const gulp = require('gulp');
 const fs = require('fs');
@@ -61,10 +82,10 @@ gulp.task('sprite', () => {
 									template += `.sprite-${sprite.name}(@scale:1) { .stitches-${data.spritesheet.name}(${sprite.offset_x}px, ${sprite.offset_y}px, ${sprite.width}px, ${sprite.height}px, @scale); }\n`;
 								}
 								template += `\n\n`;
-								for (let i = 0; i < data.sprites.length; i++) {
+								/*for (let i = 0; i < data.sprites.length; i++) {
 									let sprite = data.sprites[i];
 									template += `.position-${sprite.name}(@scale:1) { background-position: ${sprite.offset_x}px*@scale ${sprite.offset_y}px*@scale; }\n`;
-								}
+								}*/
 							return template;
 						},
 						imgName: `${files[i]}.png`,
@@ -99,10 +120,14 @@ gulp.task('less', () => {
 	 	return gulp.src('./src/styles/app.less')
 	 		.pipe(plumber({
 	        	errorHandler: (err) => {
-		            this.emit('end');
+	        		console.log(err.toString());
+		            // this.emit('end');
 		        }
 		    }))
 		    .pipe(less())
+		    .pipe(postcss([
+	        	autoprefixer({browsers: ['> 1%', 'IE 11', 'last 2 versions']})
+		    ]))
 		    .pipe(rename("./bundle.css"))
 		    .pipe(gulp.dest('./'+themeName+'/styles'))
 		    .pipe(livereload());
@@ -142,7 +167,20 @@ gulp.task('webpack', () => {
 
 	 	return gulp.src(['./src/js/app.js'])
 	 		.pipe(webpack(require('./webpack.config.js')))
-		    .pipe(uglify())
+	 		.pipe(replace(/log\.(loop|green|Green|info|red|orange|yellow|green|Green|blue|violet|white|grey|black|time|size|key|button|range|show)\(/g, function(a,b,c){
+	 			// console.log(a,b,c)
+
+
+	 			if(process.env.npm_config_logs) {
+		 			console.log('\x1b[43m\x1b[37m','Warning : log.'+b+'() found !!!', '\x1b[0m');
+	 			}else{
+	 				console.log('\x1b[41m\x1b[37m','Error : log.'+b+'() found !!!', '\x1b[0m');
+	 				process.exit();
+	 			}
+	 			return a;
+
+	 		}))
+		    // .pipe(uglify())
 		    .pipe(rename("./min-"+uniqid+".js"))
 		    .pipe(gulp.dest('./'+themeName+'/js'))
 		    .pipe(livereload());
@@ -155,11 +193,18 @@ gulp.task('webpack', () => {
 // php
 gulp.task('php', () => {
 
-	if(process.env.NODE_ENV){
+	let devtools  = '';
 
-		let devtools  = '';
-			devtools += '<script type="text/javascript" id="dev-mode-82382">(function(){var s=document.createElement("style");s.type="text/css";s.id="dev-mode-93582";s.innerHTML="@keyframes dev-mode-alert{0%{opacity:0}50%{opacity:1}100%{opacity:0}}";document.body.appendChild(s);var d=document.createElement("div");d.id="dev-mode-29384";d.style="position:fixed;top:0;left:0;width:100%;height:2px;background:red;z-index:999999;opacity:0;animation: dev-mode-alert 1s linear;";document.body.appendChild(d);setTimeout(function(){d.remove();s.remove();document.getElementById("dev-mode-82382").remove()},2000)})();</script>';
-			devtools += '<script src="http://log.matdev.fr/mylog.dev-6.0.0.js"></script>';
+	if(process.env.NODE_ENV){
+		
+		devtools += '<style type="text/css">a:empty:not([title]){border: dashed 2px blue;}</style>';
+		devtools += '<style type="text/css">img:not([width]),img[width=""]{border: dashed 2px orange;}</style>';
+		devtools += '<style type="text/css">img:not([height]),img[height=""]{border: dashed 2px orange;}</style>';
+		devtools += '<style type="text/css">img:not([alt]){border: dashed 2px red;}</style>';
+		// devtools += '<script type="text/javascript">(function(){var methods=[\'php\',\'show\',\'hide\',\'info\',\'loop\',\'red\',\'Red\',\'orange\',\'yellow\',\'green\',\'Green\',\'blue\',\'violet\',\'white\',\'grey\',\'black\',\'time\',\'size\',\'key\',\'button\',\'range\'];var length=methods.length;var console=(window.log=window.log||{});while(length--){if(!log[methods[length]])log[methods[length]]=function(){};}})();</script>'
+		devtools += '<script type="text/javascript" id="dev-mode-82382">(function(){var s=document.createElement("style");s.type="text/css";s.id="dev-mode-93582";s.innerHTML="@keyframes dev-mode-alert{0%{opacity:0}50%{opacity:1}100%{opacity:0}}";document.body.appendChild(s);var d=document.createElement("div");d.id="dev-mode-29384";d.style="position:fixed;top:0;left:0;width:100%;height:2px;background:red;z-index:999999;opacity:0;animation: dev-mode-alert 1s linear;";document.body.appendChild(d);setTimeout(function(){d.remove();s.remove();document.getElementById("dev-mode-82382").remove()},2000)})();</script>';
+		devtools += '<script src="http://log.matdev.fr/mylog.dev-6.0.0.js"></script>';
+
 	 	return gulp.src(['./src/**/*.php'])
 	 		.pipe(replace(/\{\@filename\@\}/g, 'bundle'))
 	 		.pipe(replace(/\<\!\-\- devtools \-\-\>/g, devtools))
@@ -167,12 +212,18 @@ gulp.task('php', () => {
 		    .pipe(livereload());
 	}else{
 
+		// devtools += '<style type="text/css">a:empty:not([title]){border: dashed 2px blue;}</style>';
+		// devtools += '<style type="text/css">img:not([alt]){border: dashed 2px red;}</style>';
+		devtools += '<script type="text/javascript">(function(){var methods=[\'php\',\'show\',\'hide\',\'info\',\'loop\',\'red\',\'Red\',\'orange\',\'yellow\',\'green\',\'Green\',\'blue\',\'violet\',\'white\',\'grey\',\'black\',\'time\',\'size\',\'key\',\'button\',\'range\'];var length=methods.length;var console=(window.log=window.log||{});while(length--){if(!log[methods[length]])log[methods[length]]=function(){};}})();</script>'
+		// devtools += '<script type="text/javascript" id="dev-mode-82382">(function(){var s=document.createElement("style");s.type="text/css";s.id="dev-mode-93582";s.innerHTML="@keyframes dev-mode-alert{0%{opacity:0}50%{opacity:1}100%{opacity:0}}";document.body.appendChild(s);var d=document.createElement("div");d.id="dev-mode-29384";d.style="position:fixed;top:0;left:0;width:100%;height:2px;background:red;z-index:999999;opacity:0;animation: dev-mode-alert 1s linear;";document.body.appendChild(d);setTimeout(function(){d.remove();s.remove();document.getElementById("dev-mode-82382").remove()},2000)})();</script>';
+		// devtools += '<script src="http://log.matdev.fr/mylog.dev-6.0.0.js"></script>';
+
 		gulp.src('./'+themeName+'/**/*.php', {read: false})
 	        .pipe(clean());
 
 	 	return gulp.src(['./src/**/*.php'])
 	 		.pipe(replace(/\{\@filename\@\}/g, 'min-'+uniqid))
-	 		.pipe(replace(/\<\!\-\- devtools \-\-\>/g, ''))
+	 		.pipe(replace(/\<\!\-\- devtools \-\-\>/g, process.env.npm_config_logs ? devtools : ''))
 		    .pipe(gulp.dest('./'+themeName+'/'));
 
 	}
