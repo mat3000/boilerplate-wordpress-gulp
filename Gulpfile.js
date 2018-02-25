@@ -1,19 +1,23 @@
 
 const themeName = 'boilerplate' + (process.env.NODE_ENV==='dev' ? '-dev' : '');
 const themePath = `./wordpress/wp-content/themes/${themeName}`;
-const domain_prod = 'http://preview.com';
-const domain_stag = 'http://preview.matdev.fr';
-const domain_dev  = 'http://preview.test';
-
-if(process.env.npm_config_log){
-	console.log('\x1b[41m\x1b[37m');
-	console.log('|-----------------------------------|');
-	console.log('| Warning : control log disable !!! |');
-	console.log('|-----------------------------------|');
-	console.log('\x1b[0m');
+const prod = {
+	domain: 'http://preview.com',
+	host     : '0.0.0.0',
+	user     : 'login',
+	password : 'password',
 }
+const stag = {
+	domain: 'http://preview.matdev.fr',
+	host     : '0.0.0.0',
+	user     : 'login',
+	password : 'password',
+};
+const dev  = {
+	domain: 'http://preview.test',
+};
 
-let themeInfo = `/*
+const themeInfo = `/*
 	Theme Name: ${themeName}
 	Author: mathieu bruno
 	Version: 1.0
@@ -47,14 +51,22 @@ exec('pwd', (err, stdout, stderr) => console.log(`stdout: ${stdout}`) );*/
 
 let domaine = null;
 if(process.env.NODE_ENV==='dev'){
-	domaine = domain_dev;
+	domaine = dev.domain;
 }else if(process.env.NODE_ENV==='staging'){
-	domaine = domain_stag;
+	domaine = stag.domain;
 }else if(process.env.NODE_ENV==='prod'){
-	domaine = domain_prod;
+	domaine = prod.domain;
 }
 
-var connection = mysql.createConnection({
+if(process.env.npm_config_log){
+	console.log('\x1b[41m\x1b[37m');
+	console.log('|-----------------------------------|');
+	console.log('| Warning : control log disable !!! |');
+	console.log('|-----------------------------------|');
+	console.log('\x1b[0m');
+}
+
+const connection = mysql.createConnection({
   host     : 'localhost',
   user     : 'root',
   password : 'root',
