@@ -1,0 +1,78 @@
+/* responsive */
+@phablet : 426px;
+@tablet : 577px;
+@laptop : 769px;
+@desktop : 1025px;
+
+
+/* colonnes */
+.row( 
+    @width-mobile: auto,
+    @width-phablet: @width-mobile,
+    @width-tablet: @width-phablet,
+    @width-laptop: @width-tablet,
+    @width-desktop: @width-laptop,
+) {
+  display: flex;
+  flex-wrap: wrap;
+  
+  & > * {
+    box-sizing: border-box;
+    width: @width-mobile;
+  
+    @media screen and (min-width: @phablet) {
+      width:  @width-phablet;
+    }
+  
+    @media screen and (min-width: @tablet) {
+      width:  @width-tablet;
+    }
+  
+    @media screen and (min-width: @laptop) {
+      width:  @width-laptop;
+    }
+  
+    @media screen and (min-width: @desktop) {
+      width:  @width-desktop;
+    }
+    
+  }
+}
+
+.margin(@horizontal, @vertical: @horizontal) {
+  margin: 0 -@horizontal/2;
+  margin-bottom: -@vertical;
+
+  & > * {
+    margin-bottom: @vertical;
+    padding: 0 @horizontal/2;
+  }
+}
+
+.column(
+  @width-mobile: auto,
+  @width-phablet: @width-mobile,
+  @width-tablet: @width-phablet,
+  @width-desktop: @width-tablet,
+  @width-desktop-l: @width-desktop,
+  ) {
+
+	width: @width-mobile;
+
+  @media screen and (min-width: @phablet) {
+    width:  @width-phablet;
+  }
+
+  @media screen and (min-width: @tablet) {
+    width:  @width-tablet;
+  }
+
+  @media screen and (min-width: @laptop) {
+    width:  @width-desktop;
+  }
+
+  @media screen and (min-width: @desktop) {
+    width:  @width-desktop-l;
+  }
+
+}

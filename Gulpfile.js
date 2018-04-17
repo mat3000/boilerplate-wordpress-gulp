@@ -1,22 +1,58 @@
 
-const themeName = 'boilerplate' + (process.env.NODE_ENV==='dev' ? '-dev' : '');
-const themePath = `./wordpress/wp-content/themes/${themeName}`;
-const prod = {
-	domain: 'http://preview.com',
-	host     : '0.0.0.0',
-	user     : 'login',
-	password : 'password',
-}
-const stag = {
-	domain: 'http://preview.matdev.fr',
-	host     : '0.0.0.0',
-	user     : 'login',
-	password : 'password',
-};
-const dev  = {
-	domain: 'http://preview.test',
-};
+const projectName = 'boilerplate';
 
+const environment = {
+
+	dev: {
+		domain: 'http://wp-gulp.test',
+		server: {},
+		mysql: {
+		  host     : 'localhost',
+		  database : 'wp_gulp',
+		  user     : 'root',
+		  password : 'root',
+		  socketPath: '/Applications/MAMP/tmp/mysql/mysql.sock'
+		}
+	},
+
+	stag: {
+		domain: 'http://wp-gulp.matdev.fr',
+		/*server: {
+			host     : '0.0.0.0',
+			user     : 'login',
+			password : 'password',
+		},*/
+		mysql: {
+		  host     : 'bm171452-001.privatesql:35518',
+		  database : 'wp-gulp',
+		  user     : 'wp-gulp',
+		  password : '123456'
+		}
+	},
+
+	prod: {
+		domain: 'http://wp-gulp.com',
+		/*server: {
+			host     : '0.0.0.0',
+			user     : 'login',
+			password : 'password',
+		},*/
+		mysql: {
+		  host     : 'wp-gulp.mysql.db',
+		  database : 'wp-gulp',
+		  user     : 'wp-gulp',
+		  password : '123456'
+		}
+	},
+
+
+	
+
+}
+
+
+const themeName = projectName + (process.env.NODE_ENV==='dev' ? '-dev' : '');
+const themePath = `./wordpress/wp-content/themes/${themeName}`;
 const themeInfo = `/*
 	Theme Name: ${themeName}
 	Author: mathieu bruno
@@ -46,18 +82,6 @@ const webpack = require('gulp-webpack');
 const uglify = require('gulp-uglify');
 
 
-/*const { exec } = require('child_process');
-exec('pwd', (err, stdout, stderr) => console.log(`stdout: ${stdout}`) );*/
-
-let domaine = null;
-if(process.env.NODE_ENV==='dev'){
-	domaine = dev.domain;
-}else if(process.env.NODE_ENV==='staging'){
-	domaine = stag.domain;
-}else if(process.env.NODE_ENV==='prod'){
-	domaine = prod.domain;
-}
-
 if(process.env.npm_config_log){
 	console.log('\x1b[41m\x1b[37m');
 	console.log('|-----------------------------------|');
@@ -66,26 +90,35 @@ if(process.env.npm_config_log){
 	console.log('\x1b[0m');
 }
 
-const connection = mysql.createConnection({
-  host     : 'localhost',
-  user     : 'root',
-  password : 'root',
-  database : 'wp_gulp',
-  socketPath: '/Applications/MAMP/tmp/mysql/mysql.sock'
+
+
+/*const { exec } = require('child_process');
+exec('pwd', (err, stdout, stderr) => console.log(`stdout: ${stdout}`) );*/
+
+
+// mysql
+
+const connection = mysql.createConnection(environment.dev.mysql);
+connection.connect((err) => {
+	if(err){
+		console.log(err)
+	}else{
+
+		connection.query(`UPDATE gulp_options SET option_value='${environment[process.env.NODE_ENV].domain}' WHERE option_name='siteurl'`);
+		connection.query(`UPDATE gulp_options SET option_value='${environment[process.env.NODE_ENV].domain}' WHERE option_name='home'`);
+		connection.query(`UPDATE gulp_options SET option_value='${themeName}' WHERE option_name='template'`);
+		connection.query(`UPDATE gulp_options SET option_value='${themeName}' WHERE option_name='stylesheet'`);
+		connection.end();
+
+	}
 });
 
-connection.connect();
-connection.query(`UPDATE gulp_options SET option_value='${domaine}' WHERE option_name='siteurl'`);
-connection.query(`UPDATE gulp_options SET option_value='${domaine}' WHERE option_name='home'`);
-connection.query(`UPDATE gulp_options SET option_value='${themeName}' WHERE option_name='template'`);
-connection.query(`UPDATE gulp_options SET option_value='${themeName}' WHERE option_name='stylesheet'`);
-connection.end();
 
 
 // srpites
 gulp.task('sprite', () => {
 
-	fs.readdir(path.resolve(__dirname, './src/styles/datas/img'), (err, files) => {
+	fs.readdir(path.resolve(__dirname, './src/img/'), (err, files) => {
 
 		let spriteFolder = [];
 
@@ -95,7 +128,7 @@ gulp.task('sprite', () => {
 
 				spriteFolder.push('@import \''+files[i]+'\';');
 
-				let spriteData = gulp.src(`./src/styles/datas/img/${files[i]}/*.png`).pipe(spritesmith({
+				let spriteData = gulp.src(`./src/img/${files[i]}/*.png`).pipe(spritesmith({
 						padding: 2,
 						// algorithm: 'left-right',
 						// algorithmOpts: {sort: false},
@@ -126,7 +159,7 @@ gulp.task('sprite', () => {
 				));
 
 				// create sprite image file
-		        spriteData.img.pipe(gulp.dest('./src/styles/datas/img/'));
+		        spriteData.img.pipe(gulp.dest('./src/img/'));
 
 				// create sprite less file
 		        spriteData.css.pipe(gulp.dest('./src/styles/'));
@@ -227,6 +260,13 @@ gulp.task('php', () => {
 
 	let devtools  = '';
 
+	gulp.src(['./wordpress/wp-config.php'])
+ 		.pipe(replace(/define\('DB_NAME', '.*'\);/g, `define\('DB_NAME', '${environment[process.env.NODE_ENV].mysql.database}'\);`))
+ 		.pipe(replace(/define\('DB_USER', '.*'\);/g, `define\('DB_USER', '${environment[process.env.NODE_ENV].mysql.user}'\);`))
+ 		.pipe(replace(/define\('DB_PASSWORD', '.*'\);/g, `define\('DB_PASSWORD', '${environment[process.env.NODE_ENV].mysql.password}'\);`))
+ 		.pipe(replace(/define\('DB_HOST', '.*'\);/g, `define\('DB_HOST', '${environment[process.env.NODE_ENV].mysql.host}'\);`))
+ 		.pipe(gulp.dest('./wordpress'))
+
 	if(process.env.NODE_ENV==='dev'){
 		
 		devtools += '<style type="text/css">a:empty:not([title]){border: dashed 2px blue;}</style>';
@@ -240,8 +280,9 @@ gulp.task('php', () => {
 	 	return gulp.src(['./src/**/*.php'])
 	 		.pipe(replace(/\{\@filename\@\}/g, 'bundle'))
 	 		.pipe(replace(/\<\!\-\- devtools \-\-\>/g, devtools))
-		    .pipe(gulp.dest(themePath))
-		    .pipe(livereload());
+	    .pipe(gulp.dest(themePath))
+	    .pipe(livereload());
+
 	}else{
 
 		// devtools += '<style type="text/css">a:empty:not([title]){border: dashed 2px blue;}</style>';
@@ -256,7 +297,7 @@ gulp.task('php', () => {
 	 	return gulp.src(['./src/**/*.php'])
 	 		.pipe(replace(/\{\@filename\@\}/g, 'min-'+uniqid))
 	 		.pipe(replace(/\<\!\-\- devtools \-\-\>/g, process.env.npm_config_log ? devtools : ''))
-		    .pipe(gulp.dest(themePath));
+		  .pipe(gulp.dest(themePath));
 
 	}
 
@@ -307,7 +348,7 @@ gulp.task('styleFile', () => {
 // watch
 gulp.task('watch', () => {
 
-	if(!process.env.NODE_ENV==='dev') return;
+	if(process.env.NODE_ENV!=='dev') return;
 
 	livereload.listen();
 
