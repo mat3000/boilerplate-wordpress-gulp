@@ -81,15 +81,15 @@ const spritesmith = require('gulp.spritesmith');
 const webpack = require('gulp-webpack');
 const uglify = require('gulp-uglify');
 
+const es = require('event-stream');
 
-if(process.env.npm_config_log){
+/*if(process.env.npm_config_log){
 	console.log('\x1b[41m\x1b[37m');
 	console.log('|-----------------------------------|');
 	console.log('| Warning : control log disable !!! |');
 	console.log('|-----------------------------------|');
 	console.log('\x1b[0m');
-}
-
+}*/
 
 
 /*const { exec } = require('child_process');
@@ -97,7 +97,6 @@ exec('pwd', (err, stdout, stderr) => console.log(`stdout: ${stdout}`) );*/
 
 
 // mysql
-
 const connection = mysql.createConnection(environment.dev.mysql);
 connection.connect((err) => {
 	if(err){
@@ -130,8 +129,6 @@ gulp.task('sprite', () => {
 
 				let spriteData = gulp.src(`./src/img/${files[i]}/*.png`).pipe(spritesmith({
 						padding: 2,
-						// algorithm: 'left-right',
-						// algorithmOpts: {sort: false},
 						cssSpritesheetName: files[i],
 						cssTemplate: (data) => {
 							let template  = `.stitches-${data.spritesheet.name}(@x, @y, @width, @height, @scale:1) {\n`;
@@ -147,10 +144,6 @@ gulp.task('sprite', () => {
 									template += `.sprite-${sprite.name}(@scale:1) { .stitches-${data.spritesheet.name}(${sprite.offset_x}px, ${sprite.offset_y}px, ${sprite.width}px, ${sprite.height}px, @scale); }\n`;
 								}
 								template += `\n\n`;
-								/*for (let i = 0; i < data.sprites.length; i++) {
-									let sprite = data.sprites[i];
-									template += `.position-${sprite.name}(@scale:1) { background-position: ${sprite.offset_x}px*@scale ${sprite.offset_y}px*@scale; }\n`;
-								}*/
 							return template;
 						},
 						imgName: `${files[i]}.png`,
@@ -159,10 +152,10 @@ gulp.task('sprite', () => {
 				));
 
 				// create sprite image file
-		        spriteData.img.pipe(gulp.dest('./src/img/'));
+        spriteData.img.pipe(gulp.dest('./src/img/'));
 
 				// create sprite less file
-		        spriteData.css.pipe(gulp.dest('./src/styles/'));
+        spriteData.css.pipe(gulp.dest('./src/styles/'));
 
 			}
 
@@ -199,17 +192,19 @@ gulp.task('less', () => {
 
 	}else{
 
-		gulp.src(`${themePath}/styles/*.css`, {read: false})
-	        .pipe(clean());
+		let style = gulp.src(`${themePath}/styles/*.css`, {read: false})
+      .pipe(clean());
 
-	 	return gulp.src('./src/styles/app.less')
-		    .pipe(less())
-		    .pipe(rename(`./min-${uniqid}.css`))
-		    .pipe(postcss([
-	        	autoprefixer({browsers: ['> 1%', 'last 2 versions']})
-		    ]))
-		    .pipe(mcss())
-		    .pipe(gulp.dest(`${themePath}/styles`));
+	 	let l = gulp.src('./src/styles/app.less')
+	    .pipe(less())
+	    .pipe(rename(`./min-${uniqid}.css`))
+	    .pipe(postcss([
+        	autoprefixer({browsers: ['> 1%', 'last 2 versions']})
+	    ]))
+	    .pipe(mcss())
+	    .pipe(gulp.dest(`${themePath}/styles`));
+
+    return es.concat(style, l);
 
 	}
 });
@@ -221,9 +216,9 @@ gulp.task('webpack', () => {
 
 	 	return gulp.src(['./src/js/app.js'])
 	 		.pipe(webpack(require('./webpack.config.js')))
-		    .pipe(rename("./bundle.js"))
-		    .pipe(gulp.dest(`${themePath}/js`))
-		    .pipe(livereload());
+	    .pipe(rename("./bundle.js"))
+	    .pipe(gulp.dest(`${themePath}/js`))
+	    .pipe(livereload());
 
 	}else{
 
@@ -309,11 +304,13 @@ gulp.task('medias', () => {
 
 	if(process.env.NODE_ENV==='dev'){
 
-	  	gulp.src('./src/styles/datas')
+	  let style = gulp.src('./src/styles/datas')
 			.pipe(symlink(`${themePath}/styles/datas`, {force: true}));
 
-	  	return gulp.src('./src/img')
-			.pipe(symlink(`${themePath}/img`, {force: true}))
+	  let img = gulp.src('./src/img')
+			.pipe(symlink(`${themePath}/img`, {force: true}));
+
+    return es.concat(style, img);
 
 	}else{
 
@@ -346,7 +343,7 @@ gulp.task('styleFile', () => {
 
 
 // watch
-gulp.task('watch', () => {
+gulp.task('watch', ['clear', 'styleFile', 'less', 'webpack', 'php', 'medias', 'sprite'], () => {
 
 	if(process.env.NODE_ENV!=='dev') return;
 
@@ -358,6 +355,42 @@ gulp.task('watch', () => {
 
 });
 
+gulp.task('clear', function() {
 
-gulp.task('default', ['watch', 'sprite', 'medias', 'php', 'webpack', 'less', 'styleFile']);
+	    return gulp.src(themePath, {read: false})
+	      .pipe(clean());
+
+});
+
+gulp.task('finish', ['less', 'webpack', 'php', 'medias', 'sprite', 'watch'], function() {
+
+	if(process.env.NODE_ENV==='dev'){
+
+		setTimeout( () => {
+			console.log('');
+			console.log('Ready for work ! 🤓');
+			console.log('');
+		}, 100);
+
+	}else{
+
+		setTimeout( () => {
+			console.log('');
+			console.log('Finish ! 🤪');
+			console.log('');
+		}, 100);
+
+	}
+
+});
+
+gulp.task('start', ['clear'], function() {
+
+	gulp.start(['styleFile', 'less', 'webpack', 'php', 'medias', 'sprite', 'watch', 'finish']);
+
+});
+
+gulp.task('default', ['clear', 'start']);
+
+
 

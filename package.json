@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "NODE_ENV=dev gulp",
-    "staging": "NODE_ENV=staging gulp",
+    "stag": "NODE_ENV=stag gulp",
     "prod": "NODE_ENV=prod gulp"
   },
   "author": "",
@@ -16,6 +16,7 @@
     "babel-eslint": "^8.0.1",
     "babel-loader": "7.1.1",
     "babel-preset-es2015": "^6.24.1",
+    "event-stream": "^3.3.4",
     "gulp": "^3.9.1",
     "gulp-clean": "^0.3.2",
     "gulp-file": "^0.3.0",
@@ -24,6 +25,7 @@
     "gulp-mcss": "^1.0.2",
     "gulp-plumber": "^1.1.0",
     "gulp-postcss": "^7.0.0",
+    "gulp-prompt": "^1.0.1",
     "gulp-rename": "^1.2.2",
     "gulp-string-replace": "^0.4.0",
     "gulp-symlink": "^2.1.4",
@@ -31,6 +33,9 @@
     "gulp-webpack": "^1.5.0",
     "gulp.spritesmith": "^6.5.1",
     "mysql": "github:mysqljs/mysql",
+    "prompt": "^1.0.0",
+    "q": "^1.5.1",
+    "readline": "^1.3.0",
     "uniqid": "^4.1.1",
     "webpack": "^3.6.0"
   },

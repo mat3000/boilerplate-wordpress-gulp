@@ -1,7 +1,7 @@
 npm start
-npm run dist --staging
+npm run dist --stag
 npm run dist --prod
-npm run deploy --staging
+npm run deploy --stag
 npm run deploy --prod
 
 
