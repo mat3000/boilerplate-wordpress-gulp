@@ -1,11 +1,12 @@
 
 const projectName = 'boilerplate';
 
+const tablePrefix = 'wp_';
+
 const environment = {
 
-	dev: {
+	development: {
 		domain: 'http://wp-gulp.test',
-		server: {},
 		mysql: {
 		  host     : 'localhost',
 		  database : 'wp_gulp',
@@ -15,22 +16,22 @@ const environment = {
 		}
 	},
 
-	stag: {
-		domain: 'http://wp-gulp.matdev.fr',
+	staging: {
+		domain: 'http://wp-gulp-preprod.matdev.fr',
 		/*server: {
 			host     : '0.0.0.0',
 			user     : 'login',
 			password : 'password',
 		},*/
 		mysql: {
-		  host     : 'bm171452-001.privatesql:35518',
-		  database : 'wp-gulp',
-		  user     : 'wp-gulp',
+		  host     : 'wp-gulp-preprod.mysql.db:35518',
+		  database : 'wp-gulp-preprod',
+		  user     : 'wp-gulp-preprod',
 		  password : '123456'
 		}
 	},
 
-	prod: {
+	production: {
 		domain: 'http://wp-gulp.com',
 		/*server: {
 			host     : '0.0.0.0',
@@ -45,12 +46,10 @@ const environment = {
 		}
 	},
 
-
-	
-
 }
 
-
+// const env = process.env.npm_config_argv.includes("--stag") ? 'staging' : false || process.env.npm_config_argv.includes("--prod") ? 'production' : false || 'development';
+let env = 'development';
 const themeName = projectName + (process.env.NODE_ENV==='dev' ? '-dev' : '');
 const themePath = `./wordpress/wp-content/themes/${themeName}`;
 const themeInfo = `/*
@@ -82,7 +81,8 @@ const webpack = require('gulp-webpack');
 const uglify = require('gulp-uglify');
 
 const es = require('event-stream');
-
+const open = require('gulp-open');
+const prompt = require('gulp-prompt');
 /*if(process.env.npm_config_log){
 	console.log('\x1b[41m\x1b[37m');
 	console.log('|-----------------------------------|');
@@ -96,21 +96,6 @@ const es = require('event-stream');
 exec('pwd', (err, stdout, stderr) => console.log(`stdout: ${stdout}`) );*/
 
 
-// mysql
-const connection = mysql.createConnection(environment.dev.mysql);
-connection.connect((err) => {
-	if(err){
-		console.log(err)
-	}else{
-
-		connection.query(`UPDATE gulp_options SET option_value='${environment[process.env.NODE_ENV].domain}' WHERE option_name='siteurl'`);
-		connection.query(`UPDATE gulp_options SET option_value='${environment[process.env.NODE_ENV].domain}' WHERE option_name='home'`);
-		connection.query(`UPDATE gulp_options SET option_value='${themeName}' WHERE option_name='template'`);
-		connection.query(`UPDATE gulp_options SET option_value='${themeName}' WHERE option_name='stylesheet'`);
-		connection.end();
-
-	}
-});
 
 
 
@@ -173,29 +158,26 @@ gulp.task('sprite', () => {
 // less : concat + autoprefix + minify
 gulp.task('less', () => {
 
-	if(process.env.NODE_ENV==='dev'){
+	if(process.env.NODE_ENV===''){
 
 	 	return gulp.src('./src/styles/app.less')
 	 		.pipe(plumber({
-	        	errorHandler: (err) => {
-	        		console.log(err.toString());
-		            // this.emit('end');
-		        }
-		    }))
-		    .pipe(less())
-		    .pipe(postcss([
-	        	autoprefixer({browsers: ['> 1%', 'IE 11', 'last 2 versions']})
-		    ]))
-		    .pipe(rename("./bundle.css"))
-		    .pipe(gulp.dest(`${themePath}/styles`))
-		    .pipe(livereload());
+      	errorHandler: (err) => {
+      		console.log(err.toString());
+            // this.emit('end');
+        }
+	    }))
+	    .pipe(less())
+	    .pipe(postcss([
+        autoprefixer({browsers: ['> 1%', 'IE 11', 'last 2 versions']})
+	    ]))
+	    .pipe(rename("./bundle.css"))
+	    .pipe(gulp.dest(`${themePath}/styles`))
+	    .pipe(livereload());
 
 	}else{
 
-		let style = gulp.src(`${themePath}/styles/*.css`, {read: false})
-      .pipe(clean());
-
-	 	let l = gulp.src('./src/styles/app.less')
+	 	return gulp.src('./src/styles/app.less')
 	    .pipe(less())
 	    .pipe(rename(`./min-${uniqid}.css`))
 	    .pipe(postcss([
@@ -203,8 +185,6 @@ gulp.task('less', () => {
 	    ]))
 	    .pipe(mcss())
 	    .pipe(gulp.dest(`${themePath}/styles`));
-
-    return es.concat(style, l);
 
 	}
 });
@@ -222,18 +202,11 @@ gulp.task('webpack', () => {
 
 	}else{
 
-		gulp.src(`${themePath}/js/*.js`, {read: false})
-	        .pipe(clean());
-
 	 	return gulp.src(['./src/js/app.js'])
 	 		.pipe(webpack(require('./webpack.config.js')))
 	 		.pipe(replace(/log\.(loop|green|Green|info|red|orange|yellow|green|Green|blue|violet|white|grey|black|time|size|key|button|range|show)\(/g, function(a,b,c){
-	 			// console.log(a,b,c)
 
-
-	 			if(process.env.npm_config_log) {
-		 			console.log('\x1b[43m\x1b[37m','Warning : log.'+b+'() found !!!', '\x1b[0m');
-	 			}else{
+				if(!process.env.npm_config_argv.includes("--mylog") || env==='production'){
 	 				console.log('\x1b[41m\x1b[37m','Error : log.'+b+'() found !!!', '\x1b[0m');
 	 				process.exit();
 	 			}
@@ -254,25 +227,29 @@ gulp.task('webpack', () => {
 gulp.task('php', () => {
 
 	let devtools  = '';
-
-	gulp.src(['./wordpress/wp-config.php'])
- 		.pipe(replace(/define\('DB_NAME', '.*'\);/g, `define\('DB_NAME', '${environment[process.env.NODE_ENV].mysql.database}'\);`))
- 		.pipe(replace(/define\('DB_USER', '.*'\);/g, `define\('DB_USER', '${environment[process.env.NODE_ENV].mysql.user}'\);`))
- 		.pipe(replace(/define\('DB_PASSWORD', '.*'\);/g, `define\('DB_PASSWORD', '${environment[process.env.NODE_ENV].mysql.password}'\);`))
- 		.pipe(replace(/define\('DB_HOST', '.*'\);/g, `define\('DB_HOST', '${environment[process.env.NODE_ENV].mysql.host}'\);`))
- 		.pipe(gulp.dest('./wordpress'))
+	let concat_2;
+	let concat_1 = gulp.src(['./wordpress/wp-config.php'])
+ 		.pipe(replace(/define\('DB_NAME', '.*'\);/g, `define\('DB_NAME', '${environment[env].mysql.database}'\);`))
+ 		.pipe(replace(/define\('DB_USER', '.*'\);/g, `define\('DB_USER', '${environment[env].mysql.user}'\);`))
+ 		.pipe(replace(/define\('DB_PASSWORD', '.*'\);/g, `define\('DB_PASSWORD', '${environment[env].mysql.password}'\);`))
+ 		.pipe(replace(/define\('DB_HOST', '.*'\);/g, `define\('DB_HOST', '${environment[env].mysql.host}'\);`))
+ 		.pipe(replace(`$table_prefix  = 'wp_';`, `$table_prefix  = '${tablePrefix}';`))
+ 		.pipe(gulp.dest('./wordpress'));
 
 	if(process.env.NODE_ENV==='dev'){
 		
-		devtools += '<style type="text/css">a:empty:not([title]){border: dashed 2px blue;}</style>';
-		devtools += '<style type="text/css">img:not([width]),img[width=""]{border: dashed 2px orange;}</style>';
-		devtools += '<style type="text/css">img:not([height]),img[height=""]{border: dashed 2px orange;}</style>';
-		devtools += '<style type="text/css">img:not([alt]){border: dashed 2px red;}</style>';
-		// devtools += '<script type="text/javascript">(function(){var methods=[\'php\',\'show\',\'hide\',\'info\',\'loop\',\'red\',\'Red\',\'orange\',\'yellow\',\'green\',\'Green\',\'blue\',\'violet\',\'white\',\'grey\',\'black\',\'time\',\'size\',\'key\',\'button\',\'range\'];var length=methods.length;var console=(window.log=window.log||{});while(length--){if(!log[methods[length]])log[methods[length]]=function(){};}})();</script>'
-		devtools += '<script type="text/javascript" id="dev-mode-82382">(function(){var s=document.createElement("style");s.type="text/css";s.id="dev-mode-93582";s.innerHTML="@keyframes dev-mode-alert{0%{opacity:0}50%{opacity:1}100%{opacity:0}}";document.body.appendChild(s);var d=document.createElement("div");d.id="dev-mode-29384";d.style="position:fixed;top:0;left:0;width:100%;height:2px;background:red;z-index:999999;opacity:0;animation: dev-mode-alert 1s linear;";document.body.appendChild(d);setTimeout(function(){d.remove();s.remove();document.getElementById("dev-mode-82382").remove()},2000)})();</script>';
-		devtools += '<script src="http://log.matdev.fr/mylog.dev-6.0.0.js"></script>';
+		if( !process.env.npm_config_argv.includes("--no-help") ){
+			devtools += '<style type="text/css">a:empty:not([title]){border: dashed 2px blue;}</style>';
+			devtools += '<style type="text/css">img:not([width]),img[width=""]{border: dashed 2px orange;}</style>';
+			devtools += '<style type="text/css">img:not([height]),img[height=""]{border: dashed 2px orange;}</style>';
+			devtools += '<style type="text/css">img:not([alt]){border: dashed 2px red;}</style>';
+		}
 
-	 	return gulp.src(['./src/**/*.php'])
+		if( process.env.npm_config_argv.includes("--mylog") ){
+			devtools += '<script src="http://log.matdev.fr/mylog.dev-6.0.0.js"></script>';
+		}
+		
+	 	concat_2 = gulp.src(['./src/**/*.php'])
 	 		.pipe(replace(/\{\@filename\@\}/g, 'bundle'))
 	 		.pipe(replace(/\<\!\-\- devtools \-\-\>/g, devtools))
 	    .pipe(gulp.dest(themePath))
@@ -280,22 +257,19 @@ gulp.task('php', () => {
 
 	}else{
 
-		// devtools += '<style type="text/css">a:empty:not([title]){border: dashed 2px blue;}</style>';
-		// devtools += '<style type="text/css">img:not([alt]){border: dashed 2px red;}</style>';
-		devtools += '<script type="text/javascript">(function(){var methods=[\'php\',\'show\',\'hide\',\'info\',\'loop\',\'red\',\'Red\',\'orange\',\'yellow\',\'green\',\'Green\',\'blue\',\'violet\',\'white\',\'grey\',\'black\',\'time\',\'size\',\'key\',\'button\',\'range\'];var length=methods.length;var console=(window.log=window.log||{});while(length--){if(!log[methods[length]])log[methods[length]]=function(){};}})();</script>'
-		// devtools += '<script type="text/javascript" id="dev-mode-82382">(function(){var s=document.createElement("style");s.type="text/css";s.id="dev-mode-93582";s.innerHTML="@keyframes dev-mode-alert{0%{opacity:0}50%{opacity:1}100%{opacity:0}}";document.body.appendChild(s);var d=document.createElement("div");d.id="dev-mode-29384";d.style="position:fixed;top:0;left:0;width:100%;height:2px;background:red;z-index:999999;opacity:0;animation: dev-mode-alert 1s linear;";document.body.appendChild(d);setTimeout(function(){d.remove();s.remove();document.getElementById("dev-mode-82382").remove()},2000)})();</script>';
-		// devtools += '<script src="http://log.matdev.fr/mylog.dev-6.0.0.js"></script>';
+		if(!process.env.npm_config_argv.includes("--mylog") && !env==='production'){
+			devtools += '<script src="http://log.matdev.fr/mylog.dev-6.0.0.js"></script>';
+		}
 
-		gulp.src(`${themePath}/**/*.php`, {read: false})
-	        .pipe(clean());
-
-	 	return gulp.src(['./src/**/*.php'])
+	  concat_2 = gulp.src(['./src/**/*.php'])
 	 		.pipe(replace(/\{\@filename\@\}/g, 'min-'+uniqid))
-	 		.pipe(replace(/\<\!\-\- devtools \-\-\>/g, process.env.npm_config_log ? devtools : ''))
+	 		.pipe(replace(/\<\!\-\- devtools \-\-\>/g, devtools))
 		  .pipe(gulp.dest(themePath));
 
-	}
 
+	}
+   
+  return es.concat(concat_1, concat_2);
 
 });
 
@@ -304,13 +278,13 @@ gulp.task('medias', () => {
 
 	if(process.env.NODE_ENV==='dev'){
 
-	  let style = gulp.src('./src/styles/datas')
+	  let concat_1 = gulp.src('./src/styles/datas')
 			.pipe(symlink(`${themePath}/styles/datas`, {force: true}));
 
-	  let img = gulp.src('./src/img')
+	  let concat_2 = gulp.src('./src/img')
 			.pipe(symlink(`${themePath}/img`, {force: true}));
 
-    return es.concat(style, img);
+    return es.concat(concat_1, concat_2);
 
 	}else{
 
@@ -339,11 +313,64 @@ gulp.task('styleFile', () => {
 	    .pipe(gulp.dest(themePath));
 });
 
+// clean
+gulp.task('clean', function() {
+
+  return gulp.src(themePath, {read: false})
+    .pipe(clean());
+
+});
+
+// mysql
+gulp.task('mysql', () => {
+
+	const connection = mysql.createConnection(environment.development.mysql);
+	connection.connect((err) => {
+		if(err){
+
+			console.log(err);
+
+		}else{
+
+			connection.query(`UPDATE ${tablePrefix}options SET option_value='${environment[env].domain}' WHERE option_name='siteurl'`);
+			connection.query(`UPDATE ${tablePrefix}options SET option_value='${environment[env].domain}' WHERE option_name='home'`);
+			connection.query(`UPDATE ${tablePrefix}options SET option_value='${themeName}' WHERE option_name='template'`);
+			connection.query(`UPDATE ${tablePrefix}options SET option_value='${themeName}' WHERE option_name='stylesheet'`);
+			connection.end();
+
+		}
+	});
+
+});
+
+// finish
+gulp.task('finish', ['mysql', 'less', 'webpack', 'php', 'medias', 'sprite', 'watch'], function() {
+
+	if(process.env.NODE_ENV==='dev'){
+
+		if(!process.env.npm_config_argv.includes("--no-open")){
+			gulp.src(__filename)
+			  .pipe(open({uri: environment.dev.domain}));
+		}
+
+		setTimeout( () => {
+			console.log('\nReady for work ! 🤓\n');
+		}, 100);
+
+	}else{
+
+		setTimeout( () => {
+			console.log('\nFinish ! 🤪\n');
+		}, 100);
+
+	}
+
+});
 
 
 
 // watch
-gulp.task('watch', ['clear', 'styleFile', 'less', 'webpack', 'php', 'medias', 'sprite'], () => {
+gulp.task('watch', ['clean', 'styleFile', 'less', 'webpack', 'php', 'medias', 'sprite'], () => {
 
 	if(process.env.NODE_ENV!=='dev') return;
 
@@ -355,42 +382,29 @@ gulp.task('watch', ['clear', 'styleFile', 'less', 'webpack', 'php', 'medias', 's
 
 });
 
-gulp.task('clear', function() {
+gulp.task('prompt', ['clean'], function() {
 
-	    return gulp.src(themePath, {read: false})
-	      .pipe(clean());
+	return gulp.src( './package.json' )
+    .pipe(prompt.prompt({
+      type: 'list',
+      name: 'environment',
+      message: 'Which environment would you like to run ?',
+      choices: ['staging', 'production']
+    }, function(res){
+  		env = res.environment;
+  		console.log(res + '\n')
+    }));
 
-});
+})
 
-gulp.task('finish', ['less', 'webpack', 'php', 'medias', 'sprite', 'watch'], function() {
-
-	if(process.env.NODE_ENV==='dev'){
-
-		setTimeout( () => {
-			console.log('');
-			console.log('Ready for work ! 🤓');
-			console.log('');
-		}, 100);
-
-	}else{
-
-		setTimeout( () => {
-			console.log('');
-			console.log('Finish ! 🤪');
-			console.log('');
-		}, 100);
-
-	}
-
-});
-
-gulp.task('start', ['clear'], function() {
+gulp.task('start', ['prompt'], function() {
 
 	gulp.start(['styleFile', 'less', 'webpack', 'php', 'medias', 'sprite', 'watch', 'finish']);
 
+
 });
 
-gulp.task('default', ['clear', 'start']);
+gulp.task('default', ['clean', 'start']);
 
 
 

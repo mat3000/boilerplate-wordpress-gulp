@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "NODE_ENV=dev gulp",
-    "stag": "NODE_ENV=stag gulp",
-    "prod": "NODE_ENV=prod gulp"
+    "dist": "NODE_ENV=dist gulp"
   },
   "author": "",
   "license": "ISC",
@@ -23,6 +22,7 @@
     "gulp-less": "^3.3.2",
     "gulp-livereload": "^3.8.1",
     "gulp-mcss": "^1.0.2",
+    "gulp-open": "^3.0.1",
     "gulp-plumber": "^1.1.0",
     "gulp-postcss": "^7.0.0",
     "gulp-prompt": "^1.0.1",
