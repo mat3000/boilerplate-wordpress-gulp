@@ -1,7 +1,7 @@
 
     <!-- devtools -->
 
-    <script type="text/javascript" src="<?php bloginfo("stylesheet_directory"); ?>/js/{@filename@}.js"></script>
+    <script type="text/javascript" src="<?php bloginfo("stylesheet_directory"); ?>/js/{@jsFilename@}"></script>
 	
 	<?php // wp_footer(); ?>
 	

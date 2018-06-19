@@ -1,7 +1,7 @@
 
 const projectName = 'boilerplate';
 
-const tablePrefix = 'wp_';
+const tablePrefix = 'gulp_';
 
 const environment = {
 
@@ -158,7 +158,7 @@ gulp.task('sprite', () => {
 // less : concat + autoprefix + minify
 gulp.task('less', () => {
 
-	if(process.env.NODE_ENV===''){
+	if(process.env.NODE_ENV==='dev'){
 
 	 	return gulp.src('./src/styles/app.less')
 	 		.pipe(plumber({
@@ -179,7 +179,7 @@ gulp.task('less', () => {
 
 	 	return gulp.src('./src/styles/app.less')
 	    .pipe(less())
-	    .pipe(rename(`./min-${uniqid}.css`))
+	    .pipe(rename(`./min.css`))
 	    .pipe(postcss([
         	autoprefixer({browsers: ['> 1%', 'last 2 versions']})
 	    ]))
@@ -204,7 +204,7 @@ gulp.task('webpack', () => {
 
 	 	return gulp.src(['./src/js/app.js'])
 	 		.pipe(webpack(require('./webpack.config.js')))
-	 		.pipe(replace(/log\.(loop|green|Green|info|red|orange|yellow|green|Green|blue|violet|white|grey|black|time|size|key|button|range|show)\(/g, function(a,b,c){
+	 		.pipe(replace(/log\.(loop|green|Green|info|red|orange|yellow|green|Green|blue|violet|white|grey|black|time|size|key|button|range|show)\(/g, (a,b,c) => {
 
 				if(!process.env.npm_config_argv.includes("--mylog") || env==='production'){
 	 				console.log('\x1b[41m\x1b[37m','Error : log.'+b+'() found !!!', '\x1b[0m');
@@ -213,8 +213,8 @@ gulp.task('webpack', () => {
 	 			return a;
 
 	 		}))
-		    // .pipe(uglify())
-		    .pipe(rename("./min-"+uniqid+".js"))
+		    .pipe(uglify())
+		    .pipe(rename("./min.js"))
 		    .pipe(gulp.dest(`${themePath}/js`))
 		    .pipe(livereload());
 
@@ -250,7 +250,8 @@ gulp.task('php', () => {
 		}
 		
 	 	concat_2 = gulp.src(['./src/**/*.php'])
-	 		.pipe(replace(/\{\@filename\@\}/g, 'bundle'))
+ 	 		.pipe(replace(/\{\@jsFilename\@\}/g, 'bundle.js'))
+ 	 		.pipe(replace(/\{\@cssFilename\@\}/g, 'bundle.css'))
 	 		.pipe(replace(/\<\!\-\- devtools \-\-\>/g, devtools))
 	    .pipe(gulp.dest(themePath))
 	    .pipe(livereload());
@@ -262,7 +263,8 @@ gulp.task('php', () => {
 		}
 
 	  concat_2 = gulp.src(['./src/**/*.php'])
-	 		.pipe(replace(/\{\@filename\@\}/g, 'min-'+uniqid))
+ 	 		.pipe(replace(/\{\@jsFilename\@\}/g, 'min.js?'+uniqid))
+ 	 		.pipe(replace(/\{\@cssFilename\@\}/g, 'min.css?'+uniqid))
 	 		.pipe(replace(/\<\!\-\- devtools \-\-\>/g, devtools))
 		  .pipe(gulp.dest(themePath));
 
@@ -278,8 +280,8 @@ gulp.task('medias', () => {
 
 	if(process.env.NODE_ENV==='dev'){
 
-	  let concat_1 = gulp.src('./src/styles/datas')
-			.pipe(symlink(`${themePath}/styles/datas`, {force: true}));
+	  let concat_1 = gulp.src('./src/styles/fonts')
+			.pipe(symlink(`${themePath}/styles/fonts`, {force: true}));
 
 	  let concat_2 = gulp.src('./src/img')
 			.pipe(symlink(`${themePath}/img`, {force: true}));
@@ -314,7 +316,7 @@ gulp.task('styleFile', () => {
 });
 
 // clean
-gulp.task('clean', function() {
+gulp.task('clean', () => {
 
   return gulp.src(themePath, {read: false})
     .pipe(clean());
@@ -344,24 +346,20 @@ gulp.task('mysql', () => {
 });
 
 // finish
-gulp.task('finish', ['mysql', 'less', 'webpack', 'php', 'medias', 'sprite', 'watch'], function() {
+gulp.task('finish', ['mysql', 'less', 'webpack', 'php', 'medias', 'sprite', 'watch'], () => {
 
 	if(process.env.NODE_ENV==='dev'){
 
 		if(!process.env.npm_config_argv.includes("--no-open")){
 			gulp.src(__filename)
-			  .pipe(open({uri: environment.dev.domain}));
+			  .pipe(open({uri: environment.development.domain}));
 		}
 
-		setTimeout( () => {
-			console.log('\nReady for work ! 🤓\n');
-		}, 100);
+		setTimeout( () => console.log('\nReady for work ! 🤓\n'), 100);
 
 	}else{
 
-		setTimeout( () => {
-			console.log('\nFinish ! 🤪\n');
-		}, 100);
+		setTimeout( () => console.log('\nFinish ! 🤪\n'), 100);
 
 	}
 
@@ -382,22 +380,26 @@ gulp.task('watch', ['clean', 'styleFile', 'less', 'webpack', 'php', 'medias', 's
 
 });
 
-gulp.task('prompt', ['clean'], function() {
+gulp.task('prompt', ['clean'], () => {
 
-	return gulp.src( './package.json' )
-    .pipe(prompt.prompt({
-      type: 'list',
-      name: 'environment',
-      message: 'Which environment would you like to run ?',
-      choices: ['staging', 'production']
-    }, function(res){
-  		env = res.environment;
-  		console.log(res + '\n')
-    }));
+
+	if(process.env.NODE_ENV!=='dev') {
+
+		return gulp.src( './package.json' )
+	    .pipe(prompt.prompt({
+	      type: 'list',
+	      name: 'environment',
+	      message: 'Which environment would you like to run ?',
+	      choices: ['staging', 'production']
+	    }, (res) => {
+	  		env = res.environment;
+	  		console.log(res + '\n')
+	    }));
+	  }
 
 })
 
-gulp.task('start', ['prompt'], function() {
+gulp.task('start', ['prompt'], () => {
 
 	gulp.start(['styleFile', 'less', 'webpack', 'php', 'medias', 'sprite', 'watch', 'finish']);
 

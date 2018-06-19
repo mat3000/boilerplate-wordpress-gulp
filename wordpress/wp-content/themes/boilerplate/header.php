@@ -15,7 +15,7 @@
     <link rel="icon" type="image/png" href="favicon.png" />
 
     <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
-    <link rel="stylesheet" type="text/css" href="<?php bloginfo("stylesheet_directory"); ?>/styles/bundle.css" />
+    <link rel="stylesheet" type="text/css" href="<?php bloginfo("stylesheet_directory"); ?>/styles/min.css?jim2vi4s" />
 
     <?php //wp_head(); ?> 
 
