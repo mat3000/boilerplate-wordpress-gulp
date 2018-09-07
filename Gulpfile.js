@@ -239,10 +239,10 @@ gulp.task('php', () => {
 	if(process.env.NODE_ENV==='dev'){
 		
 		if( !process.env.npm_config_argv.includes("--no-help") ){
-			devtools += '<style type="text/css">a:empty:not([title]){border: dashed 2px blue;}</style>';
-			devtools += '<style type="text/css">img:not([width]),img[width=""]{border: dashed 2px orange;}</style>';
-			devtools += '<style type="text/css">img:not([height]),img[height=""]{border: dashed 2px orange;}</style>';
-			devtools += '<style type="text/css">img:not([alt]){border: dashed 2px red;}</style>';
+			devtools += '<style type="text/css">a:empty:not([title]){outline: dashed 2px blue;}</style>';
+			devtools += '<style type="text/css">img:not([width]),img[width=""]{outline: dashed 2px orange;}</style>';
+			devtools += '<style type="text/css">img:not([height]),img[height=""]{outline: dashed 2px orange;}</style>';
+			devtools += '<style type="text/css">img:not([alt]){outline: dashed 2px red;}</style>';
 		}
 
 		if( process.env.npm_config_argv.includes("--mylog") ){
