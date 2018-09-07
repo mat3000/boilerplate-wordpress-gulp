@@ -71,7 +71,7 @@ const clean = require('gulp-clean');
 const replace = require('gulp-string-replace');
 const symlink = require('gulp-symlink');
 
-const less = require('gulp-less');
+const sass = require('gulp-sass');
 const mcss = require('gulp-mcss');
 const postcss = require('gulp-postcss');
 const autoprefixer = require('autoprefixer');
@@ -116,38 +116,38 @@ gulp.task('sprite', () => {
 						padding: 2,
 						cssSpritesheetName: files[i],
 						cssTemplate: (data) => {
-							let template  = `.stitches-${data.spritesheet.name}(@x, @y, @width, @height, @scale:1) {\n`;
-								template += `	background-position: @x*@scale @y*@scale;\n`;
-								template += `	width: @width*@scale;\n`;
-								template += `	height: @height*@scale;\n`;
-								template += `	background-size : ${data.spritesheet.width}px*@scale ${data.spritesheet.height}px*@scale;\n`;
-								template += `	background-image: url(datas/img/${data.spritesheet.name}.png);\n`;
+							let template  = `@mixin stitches-${data.spritesheet.name}($x, $y, $width, $height, $scale:1) {\n`;
+								template += `	background-position: $x*$scale $y*$scale;\n`;
+								template += `	width: $width*$scale;\n`;
+								template += `	height: $height*$scale;\n`;
+								template += `	background-size : ${data.spritesheet.width}px*$scale ${data.spritesheet.height}px*$scale;\n`;
+								template += `	background-image: url(../img/${data.spritesheet.name}.png);\n`;
 								template += `	background-repeat: no-repeat;\n`;
 								template += `}\n\n`;
 								for (let i = 0; i < data.sprites.length; i++) {
 									let sprite = data.sprites[i];
-									template += `.sprite-${sprite.name}(@scale:1) { .stitches-${data.spritesheet.name}(${sprite.offset_x}px, ${sprite.offset_y}px, ${sprite.width}px, ${sprite.height}px, @scale); }\n`;
+									template += `@mixin sprite-${sprite.name}($scale:1) { @include stitches-${data.spritesheet.name}(${sprite.offset_x}px, ${sprite.offset_y}px, ${sprite.width}px, ${sprite.height}px, $scale); }\n`;
 								}
 								template += `\n\n`;
 							return template;
 						},
 						imgName: `${files[i]}.png`,
-						cssName: `${files[i]}.less`
+						cssName: `${files[i]}.scss`
 					}
 				));
 
 				// create sprite image file
         spriteData.img.pipe(gulp.dest('./src/img/'));
 
-				// create sprite less file
+				// create sprite scss file
         spriteData.css.pipe(gulp.dest('./src/styles/'));
 
 			}
 
 		}
 
-		// update style.less
-		gulp.src('./src/styles/app.less')
+		// update style.scss
+		gulp.src('./src/styles/app.scss')
 	 		.pipe(replace(/\/\*\ssprites\s\*\/.*/g, '/* sprites */ ' + spriteFolder.join(' ')))
 			.pipe(gulp.dest('./src/styles/'));
 
@@ -155,19 +155,19 @@ gulp.task('sprite', () => {
 
 });
 
-// less : concat + autoprefix + minify
-gulp.task('less', () => {
+// scss : concat + autoprefix + minify
+gulp.task('scss', () => {
 
 	if(process.env.NODE_ENV==='dev'){
 
-	 	return gulp.src('./src/styles/app.less')
+	 	return gulp.src('./src/styles/app.scss')
 	 		.pipe(plumber({
       	errorHandler: (err) => {
       		console.log(err.toString());
             // this.emit('end');
         }
 	    }))
-	    .pipe(less())
+	    .pipe(sass().on('error', sass.logError))
 	    .pipe(postcss([
         autoprefixer({browsers: ['> 1%', 'IE 11', 'last 2 versions']})
 	    ]))
@@ -177,8 +177,8 @@ gulp.task('less', () => {
 
 	}else{
 
-	 	return gulp.src('./src/styles/app.less')
-	    .pipe(less())
+	 	return gulp.src('./src/styles/app.scss')
+	    .pipe(sass().on('error', sass.logError))
 	    .pipe(rename(`./min.css`))
 	    .pipe(postcss([
         	autoprefixer({browsers: ['> 1%', 'last 2 versions']})
@@ -346,7 +346,7 @@ gulp.task('mysql', () => {
 });
 
 // finish
-gulp.task('finish', ['mysql', 'less', 'webpack', 'php', 'medias', 'sprite', 'watch'], () => {
+gulp.task('finish', ['mysql', 'scss', 'webpack', 'php', 'medias', 'sprite', 'watch'], () => {
 
 	if(process.env.NODE_ENV==='dev'){
 
@@ -368,13 +368,13 @@ gulp.task('finish', ['mysql', 'less', 'webpack', 'php', 'medias', 'sprite', 'wat
 
 
 // watch
-gulp.task('watch', ['clean', 'styleFile', 'less', 'webpack', 'php', 'medias', 'sprite'], () => {
+gulp.task('watch', ['clean', 'styleFile', 'scss', 'webpack', 'php', 'medias', 'sprite'], () => {
 
 	if(process.env.NODE_ENV!=='dev') return;
 
 	livereload.listen();
 
-	gulp.watch('./src/styles/**/*.less', ['less']);
+	gulp.watch('./src/styles/**/*.scss', ['scss']);
 	gulp.watch(['./src/**/*.php'], ['php']);
 	gulp.watch('./src/js/**/*.js', ['webpack']);
 
@@ -401,7 +401,7 @@ gulp.task('prompt', ['clean'], () => {
 
 gulp.task('start', ['prompt'], () => {
 
-	gulp.start(['styleFile', 'less', 'webpack', 'php', 'medias', 'sprite', 'watch', 'finish']);
+	gulp.start(['styleFile', 'scss', 'webpack', 'php', 'medias', 'sprite', 'watch', 'finish']);
 
 
 });

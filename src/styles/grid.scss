@@ -1,0 +1,143 @@
+$breakpoints: (
+  mobile: 0px,
+  phablet: 426px,
+  tablet: 577px,
+  laptop: 769px,
+  desktop: 1025px,
+);
+
+@mixin breakpoint($minBreakpoint, $maxBreakpoint:null) {
+  @if $maxBreakpoint {
+    @media screen and (min-width: #{map-get($breakpoints, $minBreakpoint)}) and (max-width: #{map-get($breakpoints, $maxBreakpoint)-1}) {
+      @content;
+    }
+  }
+  @else { 
+    @media screen and (min-width: #{map-get($breakpoints, $minBreakpoint)}) {
+      @content;
+    }
+  }
+}
+
+$colSize : 8.3333%;
+
+@mixin row( 
+    $mobile: auto,
+    $phablet: $mobile,
+    $tablet: $phablet,
+    $laptop: $tablet,
+    $desktop: $laptop,
+    $margin: 5px,
+    $marginVertical: $margin,
+    $flexWrap: wrap
+) {
+  display: flex;
+  box-sizing: border-box;
+  margin: 0 (-$margin/2);
+  margin-bottom: -$marginVertical;
+    
+  @if $mobile == nowrap {
+    flex-wrap: nowrap;
+    $mobile: auto;
+  }
+  @else {
+    flex-wrap: $flexWrap;
+  }
+  
+  & > * {
+    position: relative;
+    box-sizing: border-box;
+    margin-bottom: $marginVertical;
+    padding: 0 ($margin/2);
+    
+    @include breakpoint(mobile, phablet) {
+      width: $mobile;
+    }
+    
+    @include breakpoint(phablet, tablet) {
+      width: $phablet;
+    }
+    
+    @include breakpoint(tablet, laptop) {
+      width: $tablet;
+    }
+    
+    @include breakpoint(laptop, desktop) {
+      width: $laptop;
+    }
+    
+    @include breakpoint(desktop) {
+      width: $desktop;
+    }
+    
+  }
+
+}
+
+@mixin grid( 
+  $mobile: 1,
+  $phablet: $mobile,
+  $tablet: $phablet,
+  $laptop: $tablet,
+  $desktop: $laptop,
+  $margin: 5px,
+  $marginVertical: $margin
+) {
+  @include row( 
+    $mobile: $colSize*$mobile,
+    $phablet: $colSize*$phablet,
+    $tablet: $colSize*$tablet,
+    $laptop: $colSize*$laptop,
+    $desktop: $colSize*$desktop,
+    $margin: $margin,
+    $marginVertical: $marginVertical
+  )
+}
+
+@mixin col(
+  $mobile: auto,
+  $phablet: $mobile,
+  $tablet: $phablet,
+  $laptop: $tablet,
+  $desktop: $laptop,
+) {
+  
+  @include breakpoint(mobile, phablet) {
+    width: $mobile;
+    @if index('px', unit($mobile)) != null {
+      flex: 0 0 $mobile;
+    }
+  }
+
+  @include breakpoint(phablet, tablet) {
+    width: $phablet;
+    @if index('px', unit($phablet)) != null {
+      flex: 0 0 $phablet;
+    }
+  }
+
+  @include breakpoint(tablet, laptop) {
+    width: $tablet;
+    @if index('px', unit($tablet)) != null {
+      flex: 0 0 $tablet;
+    }
+  }
+
+  @include breakpoint(laptop, desktop) {
+    width: $laptop;
+    @if index('px', unit($laptop)) != null {
+      flex: 0 0 $laptop;
+    }
+  }
+
+  @include breakpoint(desktop) {
+    width: $desktop;
+    @if index('px', unit($desktop)) != null {
+      flex: 0 0 $desktop;
+    }
+  }
+
+}
+
+
+

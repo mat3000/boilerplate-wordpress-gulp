@@ -2,17 +2,36 @@
 
 		<div class="responsive"></div>
 
-		<div class="row">
-			<div><div class="row__col">column 1</div></div>
-			<div><div class="row__col">column 2</div></div>
-			<div><div class="row__col">column 3</div></div>
-			<div><div class="row__col">column 4</div></div>
-		</div>
+    <h1>12 + 1 columns</h1>
+    <div class="container">
+      
+      <div class="children"><div class="content">1</div></div>
+      <div class="children"><div class="content">2</div></div>
+      <div class="children"><div class="content">3</div></div>
+      <div class="children"><div class="content">4</div></div>
+      <div class="children"><div class="content">5</div></div>
+      <div class="children"><div class="content">6</div></div>
+      <div class="children"><div class="content">7</div></div>
+      <div class="children"><div class="content">8</div></div>
+      <div class="children"><div class="content">9</div></div>
+      <div class="children"><div class="content">10</div></div>
+      <div class="children"><div class="content">11</div></div>
+      <div class="children"><div class="content">12</div></div>
+      <div class="children"><div class="content">13</div></div>
+      
+    </div>
 
-		<div class="row-2">
-			<div><div class="row-2__col">column 1</div></div>
-			<div><div class="row-2__col">column 2</div></div>
-		</div>
+    <br /><br /><br />
+    <h1>width fixed column</h1>
+    <div class="container-fixed">
+      
+      <div class="children"><div class="content">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div></div>
+      <div class="children"><div class="content">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</div></div>
+      
+    </div>
+
+    <div class="test-sprite"></div>
+
 
    	<h1>ohoh</h1>
 

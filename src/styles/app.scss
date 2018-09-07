@@ -1,0 +1,116 @@
+@import 'reset';
+// @import 'mixins';
+@import 'grid';
+/* sprites */ @import 'sprites';
+
+body{
+  // color: red;
+}
+
+img{
+	width: 50px;
+}
+
+.content{
+	position: relative;
+	background: #EEE;
+}
+
+.progress{
+	width: 0%;
+	height: 1px;
+	transition: width .3s ease-in-out, opacity 1s ease-in-out;
+	background: red;
+}
+
+/* breakpoint */
+.responsive::before{
+    content: 'mobile : 0px -> 425px';
+    display: block;
+    padding: 15px;
+    text-align: center;
+    background: #baa579;
+  
+    @include breakpoint(phablet) {
+      content: 'phablet : 426px -> 576px';
+      background: #a4b977;
+    }
+  
+    @include breakpoint(tablet) {
+      content: 'tablet : 577px -> 768px';
+      background: #79bb79;
+    }
+  
+    @include breakpoint(laptop) {
+      content: 'laptop : 769px -> 1024px';
+      background: #79b8a3;
+    }
+  
+    @include breakpoint(desktop) {
+      content: 'desktop : 1025px -> infini';
+      background: #7aa4ba;
+    }
+  
+}
+
+.responsive-test{
+  background: red;
+  
+  @include breakpoint(tablet, laptop) {
+    background: green;
+  }
+  
+}
+
+
+/* grid */
+
+.container{
+  
+  @include grid(
+    $mobile: 12,
+    $phablet: 6,
+    $tablet: 3,
+    $laptop: 2,
+    $desktop: 1,
+    $margin: 10px,
+    $marginVertical: 1px,
+  );
+  
+  .children:last-child{
+    @include col(100%)
+  }
+
+}
+
+.content{
+  padding: 10px;
+  text-align: center;
+  background: red;
+}
+
+.container-fixed{
+
+  @include row(nowrap);
+  
+  .children:nth-child(1) {
+     @include col(150px, $desktop: 300px);
+  } 
+  .children:nth-child(2) {
+     @include col(100%);
+  }
+  
+}
+
+
+.test-sprite{
+    @include sprite-1(.5);
+
+    background-color: orange;
+}
+
+
+
+
+/* how to use */
+

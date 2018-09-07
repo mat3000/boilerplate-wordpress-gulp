@@ -27,6 +27,7 @@
     "gulp-postcss": "^7.0.1",
     "gulp-prompt": "^1.1.0",
     "gulp-rename": "^1.4.0",
+    "gulp-sass": "^4.0.1",
     "gulp-string-replace": "^0.4.0",
     "gulp-symlink": "^2.1.4",
     "gulp-uglify": "^3.0.1",
