@@ -1,0 +1,441 @@
+
+/* 
+
+  How to use:
+  
+  container :
+  @include container();
+  
+  media query :
+  @include breakpoint(laptop) {
+    background: #79b8a3;
+  }
+  
+  row :
+  @include row(
+    $mobile: 100% | 12,
+    $phablet: 50% | 6,
+    $tablet: 33.33% | 4,
+    $laptop: 25% | 3,
+    $desktop: 12.5% | 2,
+    $desktopXL: 8.33% | 1,
+  );
+
+  gutter :
+  @include gutter(
+    $mobile: 10px | 1%,
+    $phablet: 20px | 2%,
+    $tablet: 30px | 3%,
+    $laptop: 40px | 4%,
+    $desktop: 50px | 5%,
+    $desktopXL: 60px | 6%,
+  );
+  @include gutterVertical(
+    $mobile: 10px,
+    $phablet: 20px,
+    $tablet: 30px,
+    $laptop: 40px,
+    $desktop: 50px,
+    $desktopXL: 60px,
+  );
+
+  column :
+  @include col(
+    $mobile: 100% | 12,
+    $phablet: 50% | 6,
+    $tablet: 33.33% | 4,
+    $laptop: 25% | 3,
+    $desktopXL: 12.5% | 2,
+    $desktop: 8.33% | 1,
+  )
+
+  offset :
+  @include offset(
+    $mobile: 100% | 12,
+    $phablet: 50% | 6,
+    $tablet: 33.33% | 4,
+    $laptop: 25% | 3,
+    $desktopXL: 12.5% | 2,
+    $desktop: 8.33% | 1,
+  )
+
+
+  column with fixed width :
+  @include row(nowrap);
+  
+  .children:nth-child(1) {
+     @include col(150px);
+  } 
+
+ */
+
+$debugMode : false;
+$colSize : 8.3333%;
+
+$breakpoints: (
+  mobile: 0px,
+  phablet: 426px,
+  tablet: 577px,
+  laptop: 769px,
+  desktop: 1025px,
+  desktopXL: 1440px,
+);
+
+
+/* breakpoints */
+
+@mixin breakpoint($minBreakpoint, $maxBreakpoint:null) {
+  @if $maxBreakpoint {
+    @media screen and (min-width: #{map-get($breakpoints, $minBreakpoint)}) and (max-width: #{map-get($breakpoints, $maxBreakpoint)-1}) {
+      @content;
+    }
+  }
+  @else { 
+    @media screen and (min-width: #{map-get($breakpoints, $minBreakpoint)}) {
+      @content;
+    }
+  }
+}
+
+/* container */
+
+@mixin container($width:1440, $padding:10) {
+  position: relative;
+  margin: auto;
+  padding: 0 #{$padding}px;
+  // overflow: hidden;
+
+  @include breakpoint(tablet){
+    max-width: #{$width+$padding*4}px;
+    padding: 0 #{$padding*2}px;
+  }
+}
+
+/* grid */
+
+@mixin row( 
+    $mobile: 12,
+    $phablet: $mobile,
+    $tablet: $phablet,
+    $laptop: $tablet,
+    $desktop: $laptop,
+    $desktopXL: $desktop,
+    $flexWrap: wrap
+) {
+
+  display: flex;
+  box-sizing: border-box;
+  margin: 0;
+
+  @if $mobile == nowrap {
+    flex-wrap: nowrap;
+    $mobile: 100%;
+    $phablet: $mobile;
+    $tablet: $phablet;
+    $laptop: $tablet;
+    $desktop: $laptop;
+    $desktopXL: $desktop;
+  }
+  @else {
+    flex-wrap: $flexWrap;
+  }
+
+  @if index('%', unit($mobile)) == null {
+    $mobile: $colSize*$mobile;
+  }
+  @if index('%', unit($phablet)) == null {
+    $phablet: $colSize*$phablet;
+  }
+  @if index('%', unit($tablet)) == null {
+    $tablet: $colSize*$tablet;
+  }
+  @if index('%', unit($laptop)) == null {
+    $laptop: $colSize*$laptop;
+  }
+  @if index('%', unit($desktop)) == null {
+    $desktop: $colSize*$desktop;
+  }
+  @if index('%', unit($desktopXL)) == null {
+    $desktopXL: $colSize*$desktopXL;
+  }
+  
+  & > * {
+    position: relative;
+    box-sizing: border-box;
+    margin-bottom: 0;
+    padding: 0;
+    
+    @include breakpoint(mobile, phablet) {
+      width: $mobile;
+    }
+    
+    @include breakpoint(phablet, tablet) {
+      width: $phablet;
+    }
+    
+    @include breakpoint(tablet, laptop) {
+      width: $tablet;
+    }
+    
+    @include breakpoint(laptop, desktop) {
+      width: $laptop;
+    }
+    
+    @include breakpoint(desktop, desktopXL) {
+      width: $desktop;
+    }
+    
+    @include breakpoint(desktopXL) {
+      width: $desktopXL;
+    }
+  }
+}
+
+@mixin gutter(
+  $mobile: 0,
+  $phablet: $mobile,
+  $tablet: $phablet,
+  $laptop: $tablet,
+  $desktop: $laptop,
+  $desktopXL: $desktop,
+) {
+  
+  @include breakpoint(mobile, phablet) {
+    margin: 0 (-$mobile/2);
+    margin-bottom: -$mobile;
+    & > * { 
+      margin-bottom: $mobile;
+      padding: 0 ($mobile/2);
+    }
+  }
+  
+  @include breakpoint(phablet, tablet) {
+    margin: 0 (-$phablet/2);
+    margin-bottom: -$phablet;
+    & > * { 
+      margin-bottom: $phablet;
+      padding: 0 ($phablet/2);
+    }
+  }
+  
+  @include breakpoint(tablet, laptop) {
+    margin: 0 (-$tablet/2);
+    margin-bottom: -$tablet;
+    & > * { 
+      margin-bottom: $tablet;
+      padding: 0 ($tablet/2);
+    }
+  }
+  
+  @include breakpoint(laptop, desktop) {
+    margin: 0 (-$laptop/2);
+    margin-bottom: -$laptop;
+    & > * { 
+      margin-bottom: $laptop;
+      padding: 0 ($laptop/2);
+    }
+  }
+  
+  @include breakpoint(desktop, desktopXL) {
+    margin: 0 (-$desktop/2);
+    margin-bottom: -$desktop;
+    & > * { 
+      margin-bottom: $desktop;
+      padding: 0 ($desktop/2);
+    }
+  }
+  
+  @include breakpoint(desktopXL) {
+    margin: 0 (-$desktopXL/2);
+    margin-bottom: -$desktopXL;
+    & > * { 
+      margin-bottom: $desktopXL;
+      padding: 0 ($desktopXL/2);
+    }
+  }
+
+}
+
+
+
+@mixin gutterVertical(
+  $mobile: 0,
+  $phablet: $mobile,
+  $tablet: $phablet,
+  $laptop: $tablet,
+  $desktop: $laptop,
+  $desktopXL: $desktop,
+) {
+  
+  @include breakpoint(mobile, phablet) {
+    margin-bottom: -$mobile;
+    & > * { margin-bottom: $mobile; }
+  }
+  
+  @include breakpoint(phablet, tablet) {
+    margin-bottom: -$phablet;
+    & > * { margin-bottom: $phablet; }
+  }
+  
+  @include breakpoint(tablet, laptop) {
+    margin-bottom: -$tablet;
+    & > * { margin-bottom: $tablet; }
+  }
+  
+  @include breakpoint(laptop, desktop) {
+    margin-bottom: -$laptop;
+    & > * { margin-bottom: $laptop; }
+  }
+  
+  @include breakpoint(desktop, desktopXL) {
+    margin-bottom: -$desktop;
+    & > * { margin-bottom: $desktop; }
+  }
+  
+  @include breakpoint(desktopXL) {
+    margin-bottom: -$desktopXL;
+    & > * { margin-bottom: $desktopXL; }
+  }
+
+}
+
+@mixin col(
+  $mobile: auto,
+  $phablet: $mobile,
+  $tablet: $phablet,
+  $laptop: $tablet,
+  $desktop: $laptop,
+  $desktopXL: $desktop,
+) {
+
+    @include breakpoint(mobile, phablet) {
+      @if $mobile == auto {
+        flex: 0 0 auto;
+      }
+      @else if index('px', unit($mobile)) != null {
+        flex: 0 0 $mobile;
+      }
+      @else if index('%' 'px', unit($mobile)) == null {
+        $mobile: $colSize*$mobile;
+      }
+      width: $mobile;
+    }
+
+    @include breakpoint(phablet, tablet) {
+      @if $phablet == auto {
+        flex: 0 0 auto;
+      }
+      @else if index('px', unit($phablet)) != null {
+        flex: 0 0 $phablet;
+      }
+      @else if index('%' 'px', unit($phablet)) == null {
+        $phablet: $colSize*$phablet;
+      }
+      width: $phablet;
+    }
+
+    @include breakpoint(tablet, laptop) {
+      @if $tablet == auto {
+        flex: 0 0 auto;
+      }
+      @else if index('px', unit($tablet)) != null {
+        flex: 0 0 $tablet;
+      }
+      @else if index('%' 'px', unit($tablet)) == null {
+        $tablet: $colSize*$tablet;
+      }
+      width: $tablet;
+    }
+
+    @include breakpoint(laptop, desktop) {
+      @if $laptop == auto {
+        flex: 0 0 auto;
+      }
+      @else if index('px', unit($laptop)) != null {
+        flex: 0 0 $laptop;
+      }
+      @else if index('%' 'px', unit($laptop)) == null {
+        $laptop: $colSize*$laptop;
+      }
+      width: $laptop;
+    }
+
+    @include breakpoint(desktop, desktopXL) {
+      @if $desktop == auto {
+        flex: 0 0 auto;
+      }
+      @else if index('px', unit($desktop)) != null {
+        flex: 0 0 $desktop;
+      }
+      @else if index('%' 'px', unit($desktop)) == null {
+        $desktop: $colSize*$desktop;
+      }
+      width: $desktop;
+    }
+
+    @include breakpoint(desktopXL) {
+      @if $desktopXL == auto {
+        flex: 0 0 auto;
+      }
+      @else if index('px', unit($desktopXL)) != null {
+        flex: 0 0 $desktopXL;
+      }
+      @else if index('%' 'px', unit($desktopXL)) == null {
+        $desktopXL: $colSize*$desktopXL;
+      }
+      width: $desktopXL;
+    }
+}
+
+@mixin offset(
+  $mobile: 0,
+  $phablet: $mobile,
+  $tablet: $phablet,
+  $laptop: $tablet,
+  $desktop: $laptop,
+  $desktopXL: $desktop,
+) {
+  
+    @include breakpoint(mobile, phablet) {
+      @if index('%' 'px', unit($mobile)) == null {
+        $mobile: $colSize*$mobile;
+      }
+      margin-left: $mobile;
+    }
+    
+    @include breakpoint(phablet, tablet) {
+      @if index('%' 'px', unit($phablet)) == null {
+        $phablet: $colSize*$phablet;
+      }
+      margin-left: $phablet;
+    }
+    
+    @include breakpoint(tablet, laptop) {
+      @if index('%' 'px', unit($tablet)) == null {
+        $tablet: $colSize*$tablet;
+      }
+      margin-left: $tablet;
+    }
+    
+    @include breakpoint(laptop, desktop) {
+      @if index('%' 'px', unit($laptop)) == null {
+        $laptop: $colSize*$laptop;
+      }
+      margin-left: $laptop;
+    }
+    
+    @include breakpoint(desktop, desktopXL) {
+      @if index('%' 'px', unit($desktop)) == null {
+        $desktop: $colSize*$desktop;
+      }
+      margin-left: $desktop;
+    }
+    
+    @include breakpoint(desktopXL) {
+      @if index('%' 'px', unit($desktopXL)) == null {
+        $desktopXL: $colSize*$desktopXL;
+      }
+      margin-left: $desktopXL;
+    }
+  
+}

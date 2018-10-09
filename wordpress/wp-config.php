@@ -20,7 +20,7 @@
 
 // ** MySQL settings - You can get this info from your web host ** //
 /** The name of the database for WordPress */
-define('DB_NAME', 'wp_gulp');
+define('DB_NAME', 'wp_test');
 
 /** MySQL database username */
 define('DB_USER', 'root');
@@ -63,7 +63,7 @@ define('NONCE_SALT',       '9V<a[1{By*vs_#TtyMWV$I>@+`A;:xFCq2K[0jNS(3hKyfpsy`p5
  * You can have multiple installations in one database if you give each
  * a unique prefix. Only numbers, letters, and underscores please!
  */
-$table_prefix  = 'gulp_';
+$table_prefix  = 'wp_';
 
 /**
  * For developers: WordPress debugging mode.

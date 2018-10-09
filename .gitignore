@@ -1,3 +1,4 @@
 **/node_modules/
-**/themes/*-dev/
+**/themes/**/*
+!**/themes/index.php
 .DS_Store

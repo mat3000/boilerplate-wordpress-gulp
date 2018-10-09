@@ -1,7 +1,7 @@
 
 const projectName = 'boilerplate';
 
-const tablePrefix = 'gulp_';
+const tablePrefix = 'wp_';
 
 const environment = {
 
@@ -9,7 +9,7 @@ const environment = {
 		domain: 'http://wp-gulp.test',
 		mysql: {
 		  host     : 'localhost',
-		  database : 'wp_gulp',
+		  database : 'wp_test',
 		  user     : 'root',
 		  password : 'root',
 		  socketPath: '/Applications/MAMP/tmp/mysql/mysql.sock'
@@ -18,11 +18,6 @@ const environment = {
 
 	staging: {
 		domain: 'http://wp-gulp-preprod.matdev.fr',
-		/*server: {
-			host     : '0.0.0.0',
-			user     : 'login',
-			password : 'password',
-		},*/
 		mysql: {
 		  host     : 'wp-gulp-preprod.mysql.db:35518',
 		  database : 'wp-gulp-preprod',
@@ -33,22 +28,16 @@ const environment = {
 
 	production: {
 		domain: 'http://wp-gulp.com',
-		/*server: {
-			host     : '0.0.0.0',
-			user     : 'login',
-			password : 'password',
-		},*/
 		mysql: {
-		  host     : 'wp-gulp.mysql.db',
-		  database : 'wp-gulp',
-		  user     : 'wp-gulp',
-		  password : '123456'
+		  host     : 'xxxxxx',
+		  database : 'xxxxxx',
+		  user     : 'xxxxxx',
+		  password : 'xxxxxx'
 		}
 	},
 
 }
 
-// const env = process.env.npm_config_argv.includes("--stag") ? 'staging' : false || process.env.npm_config_argv.includes("--prod") ? 'production' : false || 'development';
 let env = 'development';
 const themeName = projectName + (process.env.NODE_ENV==='dev' ? '-dev' : '');
 const themePath = `./wordpress/wp-content/themes/${themeName}`;
@@ -62,7 +51,6 @@ const gulp = require('gulp');
 const mysql = require('mysql');
 const fs = require('fs');
 const path = require('path');  
-const livereload = require('gulp-livereload');
 const rename = require("gulp-rename");
 const plumber = require('gulp-plumber');
 const file = require('gulp-file');
@@ -83,21 +71,7 @@ const uglify = require('gulp-uglify');
 const es = require('event-stream');
 const open = require('gulp-open');
 const prompt = require('gulp-prompt');
-/*if(process.env.npm_config_log){
-	console.log('\x1b[41m\x1b[37m');
-	console.log('|-----------------------------------|');
-	console.log('| Warning : control log disable !!! |');
-	console.log('|-----------------------------------|');
-	console.log('\x1b[0m');
-}*/
-
-
-/*const { exec } = require('child_process');
-exec('pwd', (err, stdout, stderr) => console.log(`stdout: ${stdout}`) );*/
-
-
-
-
+const browserSync = require('browser-sync').create();
 
 // srpites
 gulp.task('sprite', () => {
@@ -106,41 +80,45 @@ gulp.task('sprite', () => {
 
 		let spriteFolder = [];
 
-		for (let i = 0; i < files.length; i++) {
+		if(files){
 
-			if( /^sprite/.test(files[i]) && !/.*\..*/.test(files[i]) ){
+			for (let i = 0; i < files.length; i++) {
 
-				spriteFolder.push('@import \''+files[i]+'\';');
+				if( /^sprite/.test(files[i]) && !/.*\..*/.test(files[i]) ){
 
-				let spriteData = gulp.src(`./src/img/${files[i]}/*.png`).pipe(spritesmith({
-						padding: 2,
-						cssSpritesheetName: files[i],
-						cssTemplate: (data) => {
-							let template  = `@mixin stitches-${data.spritesheet.name}($x, $y, $width, $height, $scale:1) {\n`;
-								template += `	background-position: $x*$scale $y*$scale;\n`;
-								template += `	width: $width*$scale;\n`;
-								template += `	height: $height*$scale;\n`;
-								template += `	background-size : ${data.spritesheet.width}px*$scale ${data.spritesheet.height}px*$scale;\n`;
-								template += `	background-image: url(../img/${data.spritesheet.name}.png);\n`;
-								template += `	background-repeat: no-repeat;\n`;
-								template += `}\n\n`;
+					spriteFolder.push(`@import 'tools/${files[i]}';`);
+
+					let spriteData = gulp.src(`./src/img/${files[i]}/*.png`).pipe(spritesmith({
+							padding: 2,
+							cssSpritesheetName: files[i],
+							cssTemplate: (data) => {
+								let template  = `@mixin stitches-${data.spritesheet.name}($x, $y, $width, $height, $scale:1) {\n`;
+										template += `	background-position: $x*$scale $y*$scale;\n`;
+										template += `	width: $width*$scale;\n`;
+										template += `	height: $height*$scale;\n`;
+										template += `	background-size : ${data.spritesheet.width}px*$scale ${data.spritesheet.height}px*$scale;\n`;
+										template += `	background-image: url(../img/${data.spritesheet.name}.png);\n`;
+										template += `	background-repeat: no-repeat;\n`;
+										template += `}\n\n`;
 								for (let i = 0; i < data.sprites.length; i++) {
 									let sprite = data.sprites[i];
 									template += `@mixin sprite-${sprite.name}($scale:1) { @include stitches-${data.spritesheet.name}(${sprite.offset_x}px, ${sprite.offset_y}px, ${sprite.width}px, ${sprite.height}px, $scale); }\n`;
 								}
 								template += `\n\n`;
-							return template;
-						},
-						imgName: `${files[i]}.png`,
-						cssName: `${files[i]}.scss`
-					}
-				));
+								return template;
+							},
+							imgName: `${files[i]}.png`,
+							cssName: `${files[i]}.scss`
+						}
+					));
 
-				// create sprite image file
-        spriteData.img.pipe(gulp.dest('./src/img/'));
+					// create sprite image file
+	        spriteData.img.pipe(gulp.dest('./src/img/'));
 
-				// create sprite scss file
-        spriteData.css.pipe(gulp.dest('./src/styles/'));
+					// create sprite scss file
+	        spriteData.css.pipe(gulp.dest('./src/styles/tools/'));
+
+				}
 
 			}
 
@@ -173,7 +151,7 @@ gulp.task('scss', () => {
 	    ]))
 	    .pipe(rename("./bundle.css"))
 	    .pipe(gulp.dest(`${themePath}/styles`))
-	    .pipe(livereload());
+	    .pipe(browserSync.stream());
 
 	}else{
 
@@ -195,28 +173,55 @@ gulp.task('webpack', () => {
 	if(process.env.NODE_ENV==='dev'){
 
 	 	return gulp.src(['./src/js/app.js'])
-	 		.pipe(webpack(require('./webpack.config.js')))
+	 		.pipe(webpack({
+
+					devtool: 'cheap-module-eval-source-map',
+
+					module: {
+						loaders: [
+
+							{
+								test: /\.js$/,
+								loader: 'babel-loader',
+								exclude: /node_modules/,
+								query: {
+									presets: ['es2015']
+								}
+							},
+
+						]
+					}
+
+				}))
 	    .pipe(rename("./bundle.js"))
 	    .pipe(gulp.dest(`${themePath}/js`))
-	    .pipe(livereload());
+	    .pipe(browserSync.stream());
 
 	}else{
 
 	 	return gulp.src(['./src/js/app.js'])
-	 		.pipe(webpack(require('./webpack.config.js')))
-	 		.pipe(replace(/log\.(loop|green|Green|info|red|orange|yellow|green|Green|blue|violet|white|grey|black|time|size|key|button|range|show)\(/g, (a,b,c) => {
+	 		.pipe(webpack({
 
-				if(!process.env.npm_config_argv.includes("--mylog") || env==='production'){
-	 				console.log('\x1b[41m\x1b[37m','Error : log.'+b+'() found !!!', '\x1b[0m');
-	 				process.exit();
-	 			}
-	 			return a;
+				module: {
+					loaders: [
 
-	 		}))
-		    .pipe(uglify())
-		    .pipe(rename("./min.js"))
-		    .pipe(gulp.dest(`${themePath}/js`))
-		    .pipe(livereload());
+						{
+							test: /\.js$/,
+							loader: 'babel-loader',
+							exclude: /node_modules/,
+							query: {
+								presets: ['es2015']
+							}
+						},
+
+					]
+				}
+
+			}))
+	    .pipe(uglify())
+	    .pipe(rename("./min.js"))
+	    .pipe(gulp.dest(`${themePath}/js`))
+	    .pipe(browserSync.stream());
 
 
 	}
@@ -233,7 +238,7 @@ gulp.task('php', () => {
  		.pipe(replace(/define\('DB_USER', '.*'\);/g, `define\('DB_USER', '${environment[env].mysql.user}'\);`))
  		.pipe(replace(/define\('DB_PASSWORD', '.*'\);/g, `define\('DB_PASSWORD', '${environment[env].mysql.password}'\);`))
  		.pipe(replace(/define\('DB_HOST', '.*'\);/g, `define\('DB_HOST', '${environment[env].mysql.host}'\);`))
- 		.pipe(replace(`$table_prefix  = 'wp_';`, `$table_prefix  = '${tablePrefix}';`))
+ 		.pipe(replace(/^$table_prefix.*/, `$table_prefix = '${tablePrefix}';`))
  		.pipe(gulp.dest('./wordpress'));
 
 	if(process.env.NODE_ENV==='dev'){
@@ -254,7 +259,7 @@ gulp.task('php', () => {
  	 		.pipe(replace(/\{\@cssFilename\@\}/g, 'bundle.css'))
 	 		.pipe(replace(/\<\!\-\- devtools \-\-\>/g, devtools))
 	    .pipe(gulp.dest(themePath))
-	    .pipe(livereload());
+	    .pipe(browserSync.stream());
 
 	}else{
 
@@ -268,7 +273,6 @@ gulp.task('php', () => {
 	 		.pipe(replace(/\<\!\-\- devtools \-\-\>/g, devtools))
 		  .pipe(gulp.dest(themePath));
 
-
 	}
    
   return es.concat(concat_1, concat_2);
@@ -280,7 +284,7 @@ gulp.task('medias', () => {
 
 	if(process.env.NODE_ENV==='dev'){
 
-	  let concat_1 = gulp.src('./src/styles/fonts')
+	  let concat_1 = gulp.src('./src/styles/tools/fonts')
 			.pipe(symlink(`${themePath}/styles/fonts`, {force: true}));
 
 	  let concat_2 = gulp.src('./src/img')
@@ -290,20 +294,20 @@ gulp.task('medias', () => {
 
 	}else{
 
-	  	return gulp.src([
+	  	gulp.src([
 	  			'./src/**/*.jpg',
 	  			'./src/**/*.jpeg',
 	  			'./src/**/*.gif',
 	  			'./src/**/*.png',
-	  			'./src/**/*.woff',
-	  			'./src/**/*.woff2',
-	  			'./src/**/*.ttf',
-	  			'./src/**/*.svg',
-	  			'./src/**/*.eot',
 	  			'!./src/styles/datas/img/sprites/*',
 	  			'!./src/**/favicon.*'
 	  		])
 		    .pipe(gulp.dest(themePath));
+
+	  	return gulp.src([
+	  			'./src/styles/tools/fonts/**/*',
+	  		])
+		    .pipe(gulp.dest(`${themePath}/styles/fonts/`));
 
 	}
 
@@ -350,10 +354,13 @@ gulp.task('finish', ['mysql', 'scss', 'webpack', 'php', 'medias', 'sprite', 'wat
 
 	if(process.env.NODE_ENV==='dev'){
 
-		if(!process.env.npm_config_argv.includes("--no-open")){
-			gulp.src(__filename)
-			  .pipe(open({uri: environment.development.domain}));
-		}
+	  browserSync.init({
+	  	 open: process.env.npm_config_argv.includes("--no-open") ? false : 'external',
+	     host: environment.development.domain.replace(/https?:\/\//, ''),
+	     proxy: environment.development.domain.replace(/https?:\/\//, ''),
+	     port: 8080,
+	     notify: false
+	  });
 
 		setTimeout( () => console.log('\nReady for work ! 🤓\n'), 100);
 
@@ -366,13 +373,12 @@ gulp.task('finish', ['mysql', 'scss', 'webpack', 'php', 'medias', 'sprite', 'wat
 });
 
 
-
 // watch
 gulp.task('watch', ['clean', 'styleFile', 'scss', 'webpack', 'php', 'medias', 'sprite'], () => {
 
 	if(process.env.NODE_ENV!=='dev') return;
 
-	livereload.listen();
+	browserSync.reload();
 
 	gulp.watch('./src/styles/**/*.scss', ['scss']);
 	gulp.watch(['./src/**/*.php'], ['php']);
